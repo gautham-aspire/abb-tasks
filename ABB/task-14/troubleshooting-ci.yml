@@ -1,0 +1,33 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+variables:
+  - group: bp-main-vg
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo "##vso[task.setvariable variable=ORG_NAME]gautham-work"
+  displayName: 'Run a one-line script'
+
+- script: |
+    git clone https://$ORG_NAME:$(pat)@dev.azure.com/$ORG_NAME/NBKPOC/_git/iflipkart
+    cd iflipkart
+    ls
+    mvn install
+    ls
+    pwd
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '/home/vsts/work/1/s/iflipkart/target'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  displayName: 'Run a multi-line script'
+
+

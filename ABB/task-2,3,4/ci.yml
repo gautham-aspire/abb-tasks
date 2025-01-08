@@ -1,0 +1,91 @@
+
+trigger:
+  - dev
+  - staging
+  - prod
+
+pool:
+  vmIabbge: ubuntu-latest
+
+
+variables:
+
+- ${{ if eq(variables['build.SourceBranchName'], 'dev') }}:
+
+  - group: abb-dev-web-vg
+
+- ${{ if eq(variables['build.SourceBranchName'], 'staging') }}:
+
+  - group: abb-staging-web-vg
+
+- ${{ if eq(variables['build.SourceBranchName'], 'abbin') }}:
+
+  - group: abb-prod-web-vg
+
+
+
+
+steps:
+  - task: Bash@3
+    displayName: pre-requisite installation
+    inputs:
+      targetType: 'inline'
+      script: |
+        sudo apt-get -y install nodejs
+        sudo apt-get -y install npm
+        echo doing check
+        node -v
+        npm -version
+
+ 
+
+  - task: Bash@3
+    displayName: npm test
+    continueOnError: true
+    inputs:
+      targetType: 'inline'
+      script: |
+        ls
+        pwd
+        npm install --legacy-peer-deps
+        npm install -g @angular/cli
+        npm install --save rxjs-compat 
+        npm run lint
+        npm run test
+        ls
+
+  - task: Bash@3
+    displayName: npm build
+    inputs:
+      targetType: 'inline'
+      script: |
+        ls
+        pwd
+        ls
+        npm run build
+        ls
+
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'Cobertura'
+      sumabbryFileLocation: 'coverage/cobertura-coverage.xml'
+
+  - task: BuildQualityChecks@8
+    continueOnError: true
+    inputs:
+      checkWarnings: true
+      warningFailOption: 'fixed'
+      warningThreshold: '90'
+      checkCoverage: true
+      coverageFailOption: 'fixed'
+      coverageType: 'lines'
+      coverageThreshold: '90'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '/home/vsts/work/1/s/build'
+      ArtifactName: 'build'
+      publishLocation: 'Container'
+
+  
+

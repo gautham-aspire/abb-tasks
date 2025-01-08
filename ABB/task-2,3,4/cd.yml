@@ -1,0 +1,107 @@
+
+trigger:
+- none
+
+pool:
+  vmIabbge: ubuntu-latest
+
+resources:
+  pipelines:
+  - pipeline: cipipeline
+    source: 'abbturityPlatform.Api-CI'
+    trigger:
+      enabled: true 
+      branches:
+        include:
+        - refs/heads/Dev
+        - refs/heads/staging
+        - refs/heads/prod
+
+stages:
+- stage: dev
+  condition: eq(variables['build.SourceBranchName'], 'Dev')
+  variables:
+  - group: abb-dev-api-vg
+  jobs:
+    - deployment : deploy_to_webapp
+      environment: dev
+      strategy:
+        runOnce:
+          deploy:     
+            steps:
+            - task: DownloadBuildArtifacts@0
+              inputs:
+                buildType: 'specific'
+                project: '26afe9c3-902a-4f37-8ff7-75a7d25942d4'
+                pipeline: '9'
+                buildVersionToDownload: 'latest'
+                downloadType: 'single'
+                artifactName: 'drop'
+                downloadPath: '$(System.ArtifactsDirectory)'
+            
+            - task: AzureRmWebAppDeployment@4
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: 'abb-Platform'
+                appType: 'webAppLinux'
+                WebAppName: 'app-abb-dev-northeurope-001'
+                packageForLinux: '/home/vsts/work/1/s/build'
+                
+- stage: staging
+  condition: eq(variables['build.SourceBranchName'], 'staging')
+  variables:
+  - group: abb-staging-api-vg
+  jobs:
+    - deployment : deploy_to_webapp
+      environment: staging
+      strategy:
+        runOnce:
+          deploy:     
+            steps:
+            - task: DownloadBuildArtifacts@0
+              inputs:
+                buildType: 'specific'
+                project: '26afe9c3-902a-4f37-8ff7-75a7d25942d4'
+                pipeline: '9'
+                buildVersionToDownload: 'latest'
+                downloadType: 'single'
+                artifactName: 'drop'
+                downloadPath: '$(System.ArtifactsDirectory)'
+            
+            - task: AzureRmWebAppDeployment@4
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: 'abb-Platform'
+                appType: 'webAppLinux'
+                WebAppName: 'app-abbp-staging-northeurope-001'
+                packageForLinux: '/home/vsts/work/1/s/build'
+                
+                
+- stage: prod
+  condition: eq(variables['build.SourceBranchName'], 'main')
+  variables:
+  - group: abb-prod-api-vg
+  jobs:
+    - deployment : deploy_to_webapp
+      environment: prod
+      strategy:
+        runOnce:
+          deploy:     
+            steps:
+            - task: DownloadBuildArtifacts@0
+              inputs:
+                buildType: 'specific'
+                project: '26afe9c3-902a-4f37-8ff7-75a7d25942d4'
+                pipeline: '9'
+                buildVersionToDownload: 'latest'
+                downloadType: 'single'
+                artifactName: 'drop'
+                downloadPath: '$(System.ArtifactsDirectory)'
+            
+            - task: AzureRmWebAppDeployment@4
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: 'abb-Platform'
+                appType: 'webAppLinux'
+                WebAppName: 'app-abbp-prod-northeurope-001'
+                packageForLinux: '/home/vsts/work/1/s/build'
